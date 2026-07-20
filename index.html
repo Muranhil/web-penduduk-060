@@ -2,49 +2,54 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Aplikasi Kependudukan - 060</title>
+    <title>UAS CLOUD - 060</title>
+    <!-- Tetap pake bootstrap biar gak capek bikin tabel manual -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f4f6f9; }
-        .header { background: #0d6efd; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-    </style>
 </head>
-<body class="container mt-4">
-    <div class="header text-center shadow-sm">
-        <h3>Aplikasi Manajemen Penduduk</h3>
-        <p>NIM: 060</p>
+<body class="container mt-4" style="background-color: #f0f2f5;">
+
+    <div class="p-3 text-center mb-4" style="background-color: #007bff; color: white; border-radius: 10px;">
+        <h3>SISTEM DATA PENDUDUK (NIM: 060)</h3>
     </div>
 
-    <div class="card p-3 mb-4 shadow-sm">
+    <!-- Kotak Input -->
+    <div class="card p-3 mb-4">
         <form id="formPdk">
             <input type="hidden" id="id_penduduk">
-            <div class="row g-2">
-                <div class="col-md-3">
+            <div class="row">
+                <div class="col-md-3 mb-2">
                     <input type="text" id="nik" class="form-control" placeholder="NIK" required>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 mb-2">
                     <input type="text" id="nama" class="form-control" placeholder="Nama Lengkap" required>
                 </div>
-                <div class="col-md-3">
-                    <select id="jk" class="form-select">
+                <div class="col-md-3 mb-2">
+                    <select id="jk" class="form-control">
                         <option value="1">Laki-laki</option>
                         <option value="0">Perempuan</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100" id="btnSimpan">Simpan</button>
+                    <button type="submit" class="btn btn-success w-100" id="btnSimpan">Simpan Data</button>
                 </div>
             </div>
         </form>
     </div>
 
-    <div class="card shadow-sm p-3">
-        <table class="table table-bordered table-hover">
-            <thead class="table-dark">
-                <tr><th>ID</th><th>NIK</th><th>Nama</th><th>Kelamin</th><th>Aksi</th></tr>
+    <!-- Tabel -->
+    <div class="bg-white p-2 border">
+        <table class="table table-striped table-sm">
+            <thead class="table-primary">
+                <tr>
+                    <th>ID</th>
+                    <th>NIK</th>
+                    <th>Nama</th>
+                    <th>JK</th>
+                    <th>Opsi</th>
+                </tr>
             </thead>
             <tbody id="tabelData">
-                <tr><td colspan="5" class="text-center">Memuat data...</td></tr>
+                <tr><td colspan="5" class="text-center">Loading data...</td></tr>
             </tbody>
         </table>
     </div>
@@ -52,32 +57,34 @@
     <script>
         const API_URL = "https://myfuncache-060-fmgchbdnhbgxcsc9.southeastasia-01.azurewebsites.net/api/HttpTriggerImplRedis";
 
+        // Ambil Data
         async function loadData() {
             try {
                 const res = await fetch(API_URL);
-                const json = await res.json();
-                const baris = json.map(d => `
-                    <tr>
+                const data = await res.json();
+                let baris = '';
+                data.forEach(d => {
+                    baris += `<tr>
                         <td>${d.Id_penduduk}</td>
                         <td>${d.nik}</td>
                         <td>${d.nama}</td>
-                        <td>${d.jenis_kelamin ? 'Laki-laki' : 'Perempuan'}</td>
+                        <td>${d.jenis_kelamin ? 'L' : 'P'}</td>
                         <td>
-                            <button onclick="editData(${d.Id_penduduk}, '${d.nik}', '${d.nama}', ${d.jenis_kelamin})" class="btn btn-sm btn-warning">Ubah</button>
-                            <button onclick="hapusData(${d.Id_penduduk})" class="btn btn-sm btn-danger">Hapus</button>
+                            <button onclick="editData(${d.Id_penduduk}, '${d.nik}', '${d.nama}', ${d.jenis_kelamin})" class="btn btn-xs btn-warning" style="font-size: 11px">Edit</button>
+                            <button onclick="hapusData(${d.Id_penduduk})" class="btn btn-xs btn-danger" style="font-size: 11px">Del</button>
                         </td>
-                    </tr>
-                `).join('');
+                    </tr>`;
+                });
                 document.getElementById('tabelData').innerHTML = baris;
             } catch (err) {
-                document.getElementById('tabelData').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Gagal memuat data. Cek CORS Azure!</td></tr>';
+                console.log("Error fetch data");
             }
         }
 
-        document.getElementById('formPdk').onsubmit = async (e) => {
+        // Simpan atau Edit
+        document.getElementById('formPdk').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('id_penduduk').value;
-            
             const payload = {
                 Id_penduduk: id ? parseInt(id) : undefined,
                 nik: document.getElementById('nik').value,
@@ -94,26 +101,24 @@
                 body: JSON.stringify(payload)
             });
 
-            alert(id ? 'Proses Update Berhasil!' : 'Proses Create Berhasil!');
+            alert("Sukses!");
             document.getElementById('formPdk').reset();
             document.getElementById('id_penduduk').value = '';
-            document.getElementById('btnSimpan').innerText = 'Simpan';
+            document.getElementById('btnSimpan').innerText = 'Simpan Data';
             loadData();
-        };
+        });
 
         function editData(id, nik, nama, jk) {
             document.getElementById('id_penduduk').value = id;
             document.getElementById('nik').value = nik;
             document.getElementById('nama').value = nama;
             document.getElementById('jk').value = jk ? "1" : "0";
-            document.getElementById('btnSimpan').innerText = 'Update';
-            window.scrollTo(0,0);
+            document.getElementById('btnSimpan').innerText = 'Update Data';
         }
 
         async function hapusData(id) {
-            if (confirm('Lakukan proses Delete pada data ini?')) {
+            if (confirm('Hapus id ' + id + '?')) {
                 await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
-                alert('Proses Delete Berhasil!');
                 loadData();
             }
         }
