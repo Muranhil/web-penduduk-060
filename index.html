@@ -50,7 +50,7 @@
     </div>
 
     <script>
-      const API_URL = "https://myfuncache-060-fmgchbdnhbgxcsc9.southeastasia-01.azurewebsites.net/api/HttpTriggerImplRedis";
+        const API_URL = "https://myfuncache-060-fmgchbdnhbgxcsc9.southeastasia-01.azurewebsites.net/api/HttpTriggerImplRedis";
 
         async function loadData() {
             try {
@@ -77,14 +77,16 @@
         document.getElementById('formPdk').onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('id_penduduk').value;
+            
             const payload = {
+                Id_penduduk: id ? parseInt(id) : undefined,
                 nik: document.getElementById('nik').value,
                 nama: document.getElementById('nama').value,
                 jenis_kelamin: document.getElementById('jk').value == '1'
             };
 
-            const url = id ? `${API_URL}?id=${id}` : API_URL;
             const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API_URL}?id=${id}` : API_URL;
 
             await fetch(url, {
                 method: method,
@@ -105,6 +107,7 @@
             document.getElementById('nama').value = nama;
             document.getElementById('jk').value = jk ? "1" : "0";
             document.getElementById('btnSimpan').innerText = 'Update';
+            window.scrollTo(0,0);
         }
 
         async function hapusData(id) {
