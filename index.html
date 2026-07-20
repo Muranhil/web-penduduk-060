@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Aplikasi Kependudukan - 060</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+        .header { background: #0d6efd; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body class="container mt-4">
+    <div class="header text-center shadow-sm">
+        <h3>Aplikasi Manajemen Penduduk</h3>
+        <p>NIM: 060</p>
+    </div>
+
+    <div class="card p-3 mb-4 shadow-sm">
+        <form id="formPdk">
+            <input type="hidden" id="id_penduduk">
+            <div class="row g-2">
+                <div class="col-md-3">
+                    <input type="text" id="nik" class="form-control" placeholder="NIK" required>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="nama" class="form-control" placeholder="Nama Lengkap" required>
+                </div>
+                <div class="col-md-3">
+                    <select id="jk" class="form-select">
+                        <option value="1">Laki-laki</option>
+                        <option value="0">Perempuan</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100" id="btnSimpan">Simpan</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="card shadow-sm p-3">
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr><th>ID</th><th>NIK</th><th>Nama</th><th>Kelamin</th><th>Aksi</th></tr>
+            </thead>
+            <tbody id="tabelData">
+                <tr><td colspan="5" class="text-center">Memuat data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+      const API_URL = "https://myfuncache-060-fmgchbdnhbgxcsc9.southeastasia-01.azurewebsites.net/api/HttpTriggerImplRedis";
+
+        async function loadData() {
+            try {
+                const res = await fetch(API_URL);
+                const json = await res.json();
+                const baris = json.data.map(d => `
+                    <tr>
+                        <td>${d.Id_penduduk}</td>
+                        <td>${d.nik}</td>
+                        <td>${d.nama}</td>
+                        <td>${d.jenis_kelamin ? 'Laki-laki' : 'Perempuan'}</td>
+                        <td>
+                            <button onclick="editData(${d.Id_penduduk}, '${d.nik}', '${d.nama}', ${d.jenis_kelamin})" class="btn btn-sm btn-warning">Ubah</button>
+                            <button onclick="hapusData(${d.Id_penduduk})" class="btn btn-sm btn-danger">Hapus</button>
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('tabelData').innerHTML = baris;
+            } catch (err) {
+                document.getElementById('tabelData').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Gagal memuat data. Cek CORS Azure!</td></tr>';
+            }
+        }
+
+        document.getElementById('formPdk').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('id_penduduk').value;
+            const payload = {
+                nik: document.getElementById('nik').value,
+                nama: document.getElementById('nama').value,
+                jenis_kelamin: document.getElementById('jk').value == '1'
+            };
+
+            const url = id ? `${API_URL}?id=${id}` : API_URL;
+            const method = id ? 'PUT' : 'POST';
+
+            await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            alert(id ? 'Proses Update Berhasil!' : 'Proses Create Berhasil!');
+            document.getElementById('formPdk').reset();
+            document.getElementById('id_penduduk').value = '';
+            document.getElementById('btnSimpan').innerText = 'Simpan';
+            loadData();
+        };
+
+        function editData(id, nik, nama, jk) {
+            document.getElementById('id_penduduk').value = id;
+            document.getElementById('nik').value = nik;
+            document.getElementById('nama').value = nama;
+            document.getElementById('jk').value = jk ? "1" : "0";
+            document.getElementById('btnSimpan').innerText = 'Update';
+        }
+
+        async function hapusData(id) {
+            if (confirm('Lakukan proses Delete pada data ini?')) {
+                await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
+                alert('Proses Delete Berhasil!');
+                loadData();
+            }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
