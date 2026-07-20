@@ -1,126 +1,78 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>UAS CLOUD - 060</title>
-    <!-- Tetap pake bootstrap biar gak capek bikin tabel manual -->
+    <title>Sistem Data 060</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="container mt-4" style="background-color: #f0f2f5;">
-
-    <div class="p-3 text-center mb-4" style="background-color: #007bff; color: white; border-radius: 10px;">
-        <h3>SISTEM DATA PENDUDUK (NIM: 060)</h3>
-    </div>
-
-    <!-- Kotak Input -->
-    <div class="card p-3 mb-4">
-        <form id="formPdk">
-            <input type="hidden" id="id_penduduk">
-            <div class="row">
-                <div class="col-md-3 mb-2">
-                    <input type="text" id="nik" class="form-control" placeholder="NIK" required>
-                </div>
-                <div class="col-md-4 mb-2">
-                    <input type="text" id="nama" class="form-control" placeholder="Nama Lengkap" required>
-                </div>
-                <div class="col-md-3 mb-2">
-                    <select id="jk" class="form-control">
-                        <option value="1">Laki-laki</option>
-                        <option value="0">Perempuan</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-success w-100" id="btnSimpan">Simpan Data</button>
-                </div>
+<body class="container mt-4">
+    <h2>Data Penduduk 060</h2>
+    
+    <form id="formPdk" class="mb-4">
+        <input type="hidden" id="id">
+        <div class="row">
+            <div class="col-md-2"><input type="text" id="nik" class="form-control" placeholder="NIK" required></div>
+            <div class="col-md-3"><input type="text" id="nama" class="form-control" placeholder="Nama" required></div>
+            <div class="col-md-2">
+                <select id="jk" class="form-control">
+                    <option value="1">Laki</option>
+                    <option value="0">Perempuan</option>
+                </select>
             </div>
-        </form>
-    </div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary" id="btnS">Simpan</button></div>
+        </div>
+    </form>
 
-    <!-- Tabel -->
-    <div class="bg-white p-2 border">
-        <table class="table table-striped table-sm">
-            <thead class="table-primary">
-                <tr>
-                    <th>ID</th>
-                    <th>NIK</th>
-                    <th>Nama</th>
-                    <th>JK</th>
-                    <th>Opsi</th>
-                </tr>
-            </thead>
-            <tbody id="tabelData">
-                <tr><td colspan="5" class="text-center">Loading data...</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <table class="table table-bordered">
+        <thead><tr><th>ID</th><th>NIK</th><th>Nama</th><th>JK</th><th>Aksi</th></tr></thead>
+        <tbody id="tabelData"></tbody>
+    </table>
 
     <script>
-        const API_URL = "https://myfuncache-060-fmgchbdnhbgxcsc9.southeastasia-01.azurewebsites.net/api/HttpTriggerImplRedis";
+        const API = "https://myfuncache-060-fmgchbdnhbgxcsc9.southeastasia-01.azurewebsites.net/api/HttpTriggerImplRedis";
 
-        // Ambil Data
         async function loadData() {
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                let baris = '';
-                data.forEach(d => {
-                    baris += `<tr>
-                        <td>${d.Id_penduduk}</td>
-                        <td>${d.nik}</td>
-                        <td>${d.nama}</td>
-                        <td>${d.jenis_kelamin ? 'L' : 'P'}</td>
-                        <td>
-                            <button onclick="editData(${d.Id_penduduk}, '${d.nik}', '${d.nama}', ${d.jenis_kelamin})" class="btn btn-xs btn-warning" style="font-size: 11px">Edit</button>
-                            <button onclick="hapusData(${d.Id_penduduk})" class="btn btn-xs btn-danger" style="font-size: 11px">Del</button>
-                        </td>
-                    </tr>`;
-                });
-                document.getElementById('tabelData').innerHTML = baris;
-            } catch (err) {
-                console.log("Error fetch data");
-            }
+            const res = await fetch(API);
+            const data = await res.json();
+            let row = '';
+            data.forEach(d => {
+                row += `<tr><td>${d.Id_penduduk}</td><td>${d.nik}</td><td>${d.nama}</td>
+                <td>${d.jenis_kelamin ? 'Laki' : 'Perempuan'}</td>
+                <td><button class="btn btn-warning btn-sm" onclick="edit(${d.Id_penduduk}, '${d.nik}', '${d.nama}', ${d.jenis_kelamin})">Edit</button> 
+                    <button class="btn btn-danger btn-sm" onclick="hapus(${d.Id_penduduk})">Hapus</button></td></tr>`;
+            });
+            document.getElementById('tabelData').innerHTML = row;
         }
 
-        // Simpan atau Edit
-        document.getElementById('formPdk').addEventListener('submit', async (e) => {
+        document.getElementById('formPdk').onsubmit = async (e) => {
             e.preventDefault();
-            const id = document.getElementById('id_penduduk').value;
-            const payload = {
+            const id = document.getElementById('id').value;
+            const data = { 
                 Id_penduduk: id ? parseInt(id) : undefined,
-                nik: document.getElementById('nik').value,
-                nama: document.getElementById('nama').value,
-                jenis_kelamin: document.getElementById('jk').value == '1'
+                nik: document.getElementById('nik').value, 
+                nama: document.getElementById('nama').value, 
+                jenis_kelamin: document.getElementById('jk').value == '1' 
             };
-
-            const method = id ? 'PUT' : 'POST';
-            const url = id ? `${API_URL}?id=${id}` : API_URL;
-
-            await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+            await fetch(id ? `${API}?id=${id}` : API, {
+                method: id ? 'PUT' : 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
             });
-
-            alert("Sukses!");
             document.getElementById('formPdk').reset();
-            document.getElementById('id_penduduk').value = '';
-            document.getElementById('btnSimpan').innerText = 'Simpan Data';
+            document.getElementById('id').value = '';
             loadData();
-        });
+        };
 
-        function editData(id, nik, nama, jk) {
-            document.getElementById('id_penduduk').value = id;
+        function edit(id, nik, nama, jk) {
+            document.getElementById('id').value = id;
             document.getElementById('nik').value = nik;
             document.getElementById('nama').value = nama;
             document.getElementById('jk').value = jk ? "1" : "0";
-            document.getElementById('btnSimpan').innerText = 'Update Data';
+            document.getElementById('btnS').innerText = 'Update';
         }
 
-        async function hapusData(id) {
-            if (confirm('Hapus id ' + id + '?')) {
-                await fetch(`${API_URL}?id=${id}`, { method: 'DELETE' });
-                loadData();
-            }
+        async function hapus(id) {
+            await fetch(`${API}?id=${id}`, {method: 'DELETE'});
+            loadData();
         }
 
         loadData();
