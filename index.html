@@ -56,7 +56,7 @@
             try {
                 const res = await fetch(API_URL);
                 const json = await res.json();
-                const baris = json.data.map(d => `
+                const baris = json.map(d => `
                     <tr>
                         <td>${d.Id_penduduk}</td>
                         <td>${d.nik}</td>
